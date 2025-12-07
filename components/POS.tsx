@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { APP_CURRENCY } from '../constants';
-// Added ShoppingCart to imports
-import { Search, Plus, Minus, Trash2, User, CreditCard, Sparkles, Send, Mail, ShoppingCart } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, User, CreditCard, Sparkles, Send, Mail, ShoppingCart, Printer } from 'lucide-react';
 import { generateInvoiceEmail } from '../services/geminiService';
+import { generateReceiptPDF } from '../services/pdfService';
 import { Sale } from '../types';
 
 const DEFAULT_CUSTOMER = {
@@ -63,7 +63,13 @@ export const POS: React.FC = () => {
 
   const closeSuccessModal = () => {
     setLastSale(null);
-    setEmailContent('');
+    setEmailContent('Gracias por comprar!');
+  };
+
+  const handlePrintReceipt = () => {
+    if (lastSale) {
+      generateReceiptPDF(lastSale);
+    }
   };
 
   if (lastSale) {
@@ -81,17 +87,35 @@ export const POS: React.FC = () => {
           </div>
 
           <div className="p-6 space-y-4">
-            <div>
+            {/* Opciones de Salida */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <button
+                onClick={handlePrintReceipt}
+                className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition group"
+              >
+                <Printer size={32} className="text-gray-400 group-hover:text-blue-600 mb-2" />
+                <span className="font-semibold text-sm">Imprimir Tirilla</span>
+                <span className="text-xs text-gray-400">PDF 80mm</span>
+              </button>
+              
+              <div className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                 <Mail size={32} className="text-gray-400 mb-2" />
+                 <span className="font-semibold text-sm">Factura Electrónica</span>
+                 <span className="text-xs text-gray-400">Generando borrador...</span>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Mail size={16} /> Correo de Facturación (IA Generado)
+                <Mail size={16} /> Correo para el Cliente (IA)
               </label>
               {isGeneratingEmail ? (
-                <div className="h-32 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center text-gray-400">
-                  Redactando correo inteligente...
+                <div className="h-24 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center text-gray-400 text-sm">
+                  <Sparkles size={16} className="mr-2 animate-spin" /> Redactando correo...
                 </div>
               ) : (
                 <textarea 
-                  className="w-full h-32 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  className="w-full h-24 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   value={emailContent}
                   onChange={(e) => setEmailContent(e.target.value)}
                 />
@@ -107,7 +131,7 @@ export const POS: React.FC = () => {
                 className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
                 disabled={isGeneratingEmail}
               >
-                <Send size={18} /> Enviar Factura
+                <Send size={18} /> Enviar y Cerrar
               </button>
               <button 
                 onClick={closeSuccessModal}
